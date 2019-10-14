@@ -7,6 +7,8 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.OAuthBuilder;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -19,6 +21,8 @@ import springfox.documentation.service.SecurityReference;
 import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
+import springfox.documentation.spring.web.paths.AbstractPathProvider;
+import springfox.documentation.spring.web.paths.Paths;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.SecurityConfiguration;
 import springfox.documentation.swagger.web.SecurityConfigurationBuilder;
@@ -27,6 +31,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
+	@Value("${server.servlet.context-path}")
+    private String apiBasePath;
+	
 	@Value("${identity-provider.client-id}")
     private String client_id;
 	
@@ -50,6 +57,7 @@ public class SwaggerConfig {
                 .select()
                 .apis(RequestHandlerSelectors.basePackage(base_package))
                 .build()
+                .pathProvider(new BasePathAwareRelativePathProvider(apiBasePath))
                 .forCodeGeneration(true)
                 .produces(AddConsumes())
                 .consumes(AddConsumes())
@@ -98,5 +106,29 @@ public class SwaggerConfig {
             .scopeSeparator(" ")
             .useBasicAuthenticationWithAccessCodeGrant(true)
             .build();
+    }
+    class BasePathAwareRelativePathProvider extends AbstractPathProvider {
+        private String basePath;
+
+        public BasePathAwareRelativePathProvider(String basePath) {
+            this.basePath = basePath;
+        }
+
+        @Override
+        protected String applicationPath() {
+            return basePath;
+        }
+
+        @Override
+        protected String getDocumentationPath() {
+            return "/";
+        }
+
+        @Override
+        public String getOperationPath(String operationPath) {
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath("/");
+            return Paths.removeAdjacentForwardSlashes(
+                    uriComponentsBuilder.path(operationPath).build().toString());
+        }
     }
 }
