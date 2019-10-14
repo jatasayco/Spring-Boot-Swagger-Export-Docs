@@ -1,0 +1,10 @@
+server:
+  port: 8089
+
+identity-provider:
+  url-introspect: https://xxx.demo.com/v1/identity/introspect
+  resource-id: ms-demo
+  resource-secret: yyyy
+  url-identity: https://xxx.demo.com/v1/identity
+  client-id: demo.swagger
+  client-secret: xxxx
